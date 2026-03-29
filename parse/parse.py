@@ -1,6 +1,7 @@
 import re
 import csv
 from pypdf import PdfReader
+from bdd.bdd import save_bill
 
 REGEX_FACTURA = r"Nº\s*(\d{4}-\d{8})"
 REGEX_MONTO = r"[0-9,]+\.[0-9]{2}"
@@ -9,15 +10,11 @@ LINEA_PREVIA_MONTO = "SUBTOTAL"
 INDICIO_LINEA_REGIMEN_FISCAL = ["RESPONSABLE INSCRIPTO", "RESPONSABLE MONOTRIBUTO"]
 COMA = ","
 COMILLA = '"'
+PORCENTAJE_COMISION = 0.07
 
-def update_csv(csv_path, company_name, bill_number, net_amount):
-    with open(csv_path, MODO_APPEND, newline='', encoding='utf-8') as bills_csv:
-        bills_writer = csv.writer(bills_csv, delimiter=";")
-        bills_writer.writerow([company_name, bill_number, net_amount])
-
-def parse_bills(bill_path, csv_path):
+def parse_bills(bill_path):
     pdf_reader = PdfReader(bill_path)
-    bill_number, company_name, net_amount = None, None, None
+    bill_number, company_name, net_amount, comision = None, None, None, None
 
     for page in pdf_reader.pages:
         text = page.extract_text()
@@ -42,6 +39,7 @@ def parse_bills(bill_path, csv_path):
                     if match_net_amount:
                         monto_limpio = match_net_amount.group(0).replace(COMA, "")
                         net_amount = float(monto_limpio)
+                        comision = net_amount * PORCENTAJE_COMISION
                         break
-                    
-    update_csv(csv_path, company_name, bill_number, net_amount)
+
+    save_bill(company_name, bill_number, net_amount, comision)
