@@ -5,16 +5,19 @@ from bdd.bdd import save_bill
 
 REGEX_FACTURA = r"Nº\s*(\d{4}-\d{8})"
 REGEX_MONTO = r"[0-9,]+\.[0-9]{2}"
+REGEX_FECHA = r"Fecha:?\s+(\d{2})/(\d{2})/(\d{4})"
 MODO_APPEND = "a"
 LINEA_PREVIA_MONTO = "SUBTOTAL"
 INDICIO_LINEA_REGIMEN_FISCAL = ["RESPONSABLE INSCRIPTO", "RESPONSABLE MONOTRIBUTO"]
 COMA = ","
 COMILLA = '"'
 PORCENTAJE_COMISION = 0.07
+MONTH = 2
+YEAR = 3
 
 def parse_bills(bill_path):
     pdf_reader = PdfReader(bill_path)
-    bill_number, company_name, net_amount, comision = None, None, None, None
+    bill_number, company_name, net_amount, comision, month_year = None, None, None, None, None
 
     for page in pdf_reader.pages:
         text = page.extract_text()
@@ -33,6 +36,13 @@ def parse_bills(bill_path):
                         company_name = pdf_lines[i+1].replace(COMILLA, "").strip()
                         break
             
+            if not month_year:
+                match_month_year = re.search(REGEX_FECHA, line)
+                if match_month_year:
+                    month = match_month_year.group(MONTH)
+                    year = match_month_year.group(YEAR)
+                    month_year = f"{month}_{year}"
+            
             if not net_amount:
                 if line == LINEA_PREVIA_MONTO:
                     match_net_amount = re.search(REGEX_MONTO, pdf_lines[i+1])
@@ -42,4 +52,4 @@ def parse_bills(bill_path):
                         comision = net_amount * PORCENTAJE_COMISION
                         break
 
-    save_bill(company_name, bill_number, net_amount, comision)
+    save_bill(company_name, bill_number, net_amount, comision, month_year)

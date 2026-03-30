@@ -1,6 +1,7 @@
 import os
 from parse.parse import parse_bills
-from bdd.bdd import initialize_db, set_paid_bill, get_total_comisions
+from bdd.bdd import set_paid_bill, get_month_comision
+from datetime import datetime
 
 EXTENSION_PDF = "PDF"
 OPCION_CARGAR = "1"
@@ -8,10 +9,11 @@ OPCION_MARCAR = "2"
 OPCION_TOTAL = "3"
 OPCION_SALIR = "X"
 
+MONTHS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
+
 def main():
-    initialize_db()
-    exit = False
     print("Bienvenido a Bill Parser")
+    exit = False
 
     while not exit:
         print("Oprima el número correspondiente a la operacion que quiere realizar")
@@ -38,12 +40,17 @@ def main():
                 
         elif operation == OPCION_MARCAR:
             paid_bill_number = input("Ingrese el número de la factura pagada: ")
-            set_paid_bill(paid_bill_number)
+            bill_month = input("Ingrese el mes de la factura (Ejemplo: Marzo - 03): ")
+            while bill_month not in MONTHS:
+                bill_month = input("Ingrese un mes válido: ")
 
-        elif operation == OPCION_TOTAL:
-            monto = get_total_comisions()
-            monto_transformado = f"{monto:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            print(f"El monto a pagar es: $ {monto_transformado}")
+            bill_year = input("Ingrese el año de la factura: ")
+            set_paid_bill(paid_bill_number, f"{bill_month}_{bill_year}")
+
+        # elif operation == OPCION_TOTAL:
+        #     monto = get_month_comision(month_year)
+        #     monto_transformado = f"{monto:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        #     print(f"El monto a pagar es: $ {monto_transformado}")
 
         elif operation.upper() == OPCION_SALIR:
             break

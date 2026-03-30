@@ -4,12 +4,13 @@ from pathlib import Path
 DB_DIR = Path(".")
 DB_PATH = DB_DIR / "bills.db"
 
-def initialize_db():
-    conexion = sqlite3.connect(DB_PATH)
+def initialize_db(month_year):
+    db_name = f"bills_{month_year}.db"
+    conexion = sqlite3.connect(DB_DIR / db_name)
     cursor = conexion.cursor()
 
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS bills (
+    cursor.execute(f'''
+        CREATE TABLE IF NOT EXISTS bills_{month_year} (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             company_name TEXT,
             bill_number TEXT UNIQUE,
@@ -23,14 +24,15 @@ def initialize_db():
     conexion.commit()
     conexion.close()
 
-def get_comision(bill_number):
+def get_bill_comision(bill_number, month_year):
     try:
-        conexion = sqlite3.connect(DB_PATH)
+        db_name = f"bills_{month_year}.db"
+        conexion = sqlite3.connect(DB_DIR / db_name)
         conexion.row_factory = sqlite3.Row
         cursor = conexion.cursor()
 
-        cursor.execute('''
-            SELECT * FROM bills
+        cursor.execute(f'''
+            SELECT * FROM bills_{month_year}
             WHERE bill_number = ?
         ''', (bill_number,))
 
@@ -46,13 +48,14 @@ def get_comision(bill_number):
     finally:
         conexion.close()
 
-def get_total_comisions():
-    try: 
-        conexion = sqlite3.connect(DB_PATH)
+def get_month_comision(month_year):
+    try:
+        db_name = f"bills_{month_year}.db"
+        conexion = sqlite3.connect(DB_DIR / db_name)
         cursor = conexion.cursor()
 
-        cursor.execute('''
-            SELECT SUM(comision_to_pay) from bills
+        cursor.execute(f'''
+            SELECT SUM(comision_to_pay) from bills_{month_year}
             ''')
         
         total = cursor.fetchone()[0]
@@ -63,15 +66,17 @@ def get_total_comisions():
     finally:
         conexion.close()
 
-def save_bill(company_name, bill_number, net_amount, comision):
+def save_bill(company_name, bill_number, net_amount, comision, month_year):
+    initialize_db(month_year)
     try:
-        conexion = sqlite3.connect(DB_PATH)
+        db_name = f"bills_{month_year}.db"
+        conexion = sqlite3.connect(DB_DIR / db_name)
         cursor = conexion.cursor()
         
-        cursor.execute('''
-            INSERT INTO bills (company_name, bill_number, net_amount, comision, paid)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (company_name, bill_number, net_amount, comision, "NO"))
+        cursor.execute(f'''
+            INSERT INTO bills_{month_year} (company_name, bill_number, net_amount, comision, paid, comision_to_pay)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (company_name, bill_number, net_amount, comision, "NO", 0))
         
         conexion.commit()
         print(f"Factura {bill_number} guardada correctamente.")
@@ -81,16 +86,17 @@ def save_bill(company_name, bill_number, net_amount, comision):
     finally:
         conexion.close()
 
-def set_paid_bill(bill_number):
+def set_paid_bill(bill_number, month_year):
     try:
-        conexion = sqlite3.connect(DB_PATH)
+        db_name = f"bills_{month_year}.db"
+        conexion = sqlite3.connect(DB_DIR / db_name)
         cursor = conexion.cursor()
         
-        cursor.execute('''
-            UPDATE bills 
+        cursor.execute(f'''
+            UPDATE bills_{month_year} 
             SET paid = ?, comision_to_pay = ?
             WHERE bill_number = ?
-        ''', ("SI", get_comision(bill_number), bill_number))
+        ''', ("SI", get_month_comision(bill_number), bill_number))
         
         if cursor.rowcount > 0:
             conexion.commit()
