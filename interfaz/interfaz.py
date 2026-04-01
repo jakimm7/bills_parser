@@ -1,14 +1,6 @@
-import os
+from parse.parse import parse_bill
+from bdd.bdd import save_bill
 
-def compile_files(extension, directory):
-    valid_directory = False
-    files = []
-    for file in os.listdir(directory):
-        if file.endswith(extension):
-            valid_directory = True
-            bill_path = os.path.join(directory, file)
-            files.append(bill_path)
-
-    if valid_directory:
-        return True, files
-    return False, None
+def submit_bill(bill):
+    company_name, bill_number, net_amount, comision, month_year = parse_bill(bill)
+    save_bill(company_name, bill_number, net_amount, comision, month_year)

@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
+from interfaz.interfaz import save_bill
 from parse.parse import parse_bill, parse_date
 from bdd.bdd import set_paid_bill, get_month_comision
-from interfaz.interfaz import compile_files
+from utils.utils import *
 
 DB_DIR = Path("./bills_per_month")
 EXTENSION_DB = "db"
@@ -31,17 +32,11 @@ def main():
 
         if operation == OPCION_CARGAR:
             directory = input("Ingrese la ruta absoluta del directorio con las facturas: ")
-            while not os.path.isdir(directory):
-                directory = input("La ruta que ingreso no existe, ingrese otra nuevamente: ")
+            while not is_dir(directory) or not is_x_dir(EXTENSION_PDF, directory):
+                directory = input("La ruta que ingreso no existe o no tiene facturas en formato PDF, ingrese otra nuevamente: ")
 
-            pdf_directory, files = compile_files(EXTENSION_PDF, directory)
-
-            if not pdf_directory:
-                input("El directorio especificado no tiene facturas en formato pdf, oprima cualquier letra para volver al menu principal")
-                continue
-
-            for file in files:
-                parse_bill(file)
+            for file in compile_files(directory):
+                save_bill(file)
                 
         elif operation == OPCION_MARCAR:
             paid_bill_number = input("Ingrese el número de la factura pagada (ingresa los últimos 4 números): ")

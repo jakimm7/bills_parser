@@ -59,4 +59,4 @@ def parse_bill(bill_path):
                         comision = net_amount * PORCENTAJE_COMISION
                         break
 
-    save_bill(company_name, bill_number, net_amount, comision, month_year)
+    return company_name, bill_number, net_amount, comision, month_year
