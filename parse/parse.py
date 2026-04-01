@@ -15,7 +15,21 @@ PORCENTAJE_COMISION = 0.07
 MONTH = 2
 YEAR = 3
 
-def parse_bills(bill_path):
+def parse_bill_number(line):
+    match = re.search(REGEX_FACTURA, line)
+    if match:
+        return match.group(1)
+    return None
+
+def parse_date(line):
+    match = re.search(REGEX_FECHA, line)
+    if match:
+        month = match.group(MONTH)
+        year = match.group(YEAR)
+        return f"{month}_{year}"
+    return None
+
+def parse_bill(bill_path):
     pdf_reader = PdfReader(bill_path)
     bill_number, company_name, net_amount, comision, month_year = None, None, None, None, None
 
@@ -25,10 +39,7 @@ def parse_bills(bill_path):
 
         for i, line in enumerate(pdf_lines):
             if not bill_number:
-                match_bill_number = re.search(REGEX_FACTURA, line)
-                if match_bill_number:
-                    bill_number = match_bill_number.group(1)
-                    continue
+                bill_number = parse_bill_number(line)
 
             if not company_name:
                 for indicio in INDICIO_LINEA_REGIMEN_FISCAL:
@@ -37,11 +48,7 @@ def parse_bills(bill_path):
                         break
             
             if not month_year:
-                match_month_year = re.search(REGEX_FECHA, line)
-                if match_month_year:
-                    month = match_month_year.group(MONTH)
-                    year = match_month_year.group(YEAR)
-                    month_year = f"{month}_{year}"
+                month_year = parse_date(line)
             
             if not net_amount:
                 if line == LINEA_PREVIA_MONTO:

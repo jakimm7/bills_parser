@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 
-DB_DIR = Path(".")
+DB_DIR = Path("./bills_per_month")
 DB_PATH = DB_DIR / "bills.db"
 
 def initialize_db(month_year):
@@ -48,14 +48,14 @@ def get_bill_comision(bill_number, month_year):
     finally:
         conexion.close()
 
-def get_month_comision(month_year):
+def get_month_comision(db_name):
     try:
-        db_name = f"bills_{month_year}.db"
+        table_name = db_name.replace(".db", "")
         conexion = sqlite3.connect(DB_DIR / db_name)
         cursor = conexion.cursor()
 
         cursor.execute(f'''
-            SELECT SUM(comision_to_pay) from bills_{month_year}
+            SELECT SUM(comision_to_pay) from {table_name}
             ''')
         
         total = cursor.fetchone()[0]
@@ -96,7 +96,7 @@ def set_paid_bill(bill_number, month_year):
             UPDATE bills_{month_year} 
             SET paid = ?, comision_to_pay = ?
             WHERE bill_number = ?
-        ''', ("SI", get_month_comision(bill_number), bill_number))
+        ''', ("SI", get_bill_comision(bill_number, month_year), bill_number))
         
         if cursor.rowcount > 0:
             conexion.commit()
